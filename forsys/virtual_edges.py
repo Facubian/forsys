@@ -370,13 +370,26 @@ def join_two_vertices(vertices_to_join, vertices, edges, cells, mapper={}):
     y_cm = abs(v0.y + v1.y) / 2
 
     # find the common edge
+    # print("v0: ", v0)
+    # print("v1: ", v1)
+
     common_edge = list(set(v0.ownEdges) & set(v1.ownEdges))[0]
 
     new_id = get_unused_id(vertices)        
     new_vertex = fvertex.Vertex(new_id, x_cm, y_cm)
     vertices[new_id] = new_vertex
-    mapper[vertices_to_join[0]] = new_id
-    mapper[vertices_to_join[1]] = new_id
+    # if the vertex is already in the values, change it
+    if v0.id in mapper.values():
+        for did, dval in mapper.items():
+            if v0.id == dval:
+                mapper[did] = new_id
+    if v1.id in mapper.values():
+        for did, dval in mapper.items():
+            if v1.id == dval:
+                mapper[did] = new_id
+    mapper[v0.id] = new_id
+    mapper[v1.id] = new_id
+
     # replace vertex in the cells
     list_of_cells_0 = [cid for cid in v0.ownCells]
     list_of_cells_1 = [cid for cid in v1.ownCells]
@@ -402,9 +415,10 @@ def join_two_vertices(vertices_to_join, vertices, edges, cells, mapper={}):
 
 
 def get_unused_id(dictionary):
-    new_id = len(dictionary)
-    i = 0
-    while dictionary.get(new_id) != None:
-        new_id = len(dictionary) + i
-        i += 1
+    # new_id = len(dictionary)
+    # i = 0
+    new_id = max(dictionary.keys()) + 1
+    # while dictionary.get(new_id) != None:
+    #     new_id = len(dictionary) + i
+    #     i += 1
     return new_id
