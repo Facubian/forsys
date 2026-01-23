@@ -65,13 +65,15 @@ Current flags
     - Path to the folder in which to save the output. Default is the same as the input folder.
   * - -cc, -\-composite
     - Whether to create composite image with the original microscopies.
-  * - -ms, -/-max_size <MAX_SIZE>
+  * - -ms, -\-max_size <MAX_SIZE>
     - Maximum multiplier for cellular size. Used to filter out cells that are 
       too big. default is no limit",
   * - -p, -\-pngs
     - Whether to create forsys output of each frame.
   * - -pc, -\-plot_connections
     - Whether to plot the connections based on the connections file.
+  * - -o, -\-output_csv
+  - Output results to two CSV files, one for pressures and one for stresses.
   * - -c, -\-connections <CONNECTIONS_FILE>
     - Path to the connections file.
   * - -ar, -\-aspect_ratio <ASPECT_RATIO>
