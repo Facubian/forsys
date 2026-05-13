@@ -119,6 +119,8 @@ def create_csvs(frame) -> tuple:
     positions_y = []
     be_ids = []
     curvatures = []
+    own_cells = []
+    vertices = []
 
     cell_ids = []
     areas = []
@@ -126,6 +128,7 @@ def create_csvs(frame) -> tuple:
     cell_posx = []
     cell_posy = []
     pressures = []
+    neighbors = []
 
     for cellid, cell in frame.cells.items():
         cell_ids.append(cellid)
@@ -133,6 +136,7 @@ def create_csvs(frame) -> tuple:
         perimeters.append(cell.get_perimeter())
         cell_posx.append(cell.get_cm()[0])
         cell_posy.append(cell.get_cm()[1])
+        neighbors.append(cell.neighbors)
         pressures.append(cell.pressure)
 
     cell_df = pd.DataFrame({
@@ -141,15 +145,18 @@ def create_csvs(frame) -> tuple:
            "perimeter": perimeters,
            "position_x": cell_posx,
            "position_y": cell_posy,
+           "neighbors": neighbors,
            "pressure": pressures,
     })
 
-    for beid, big_edge in frame.big_edges.items():
+    for _, big_edge in frame.big_edges.items():
         tensions.append(big_edge.tension)
         lengths.append(big_edge.get_length())
         positions_x.append(np.mean(big_edge.xs))
         positions_y.append(np.mean(big_edge.ys))
         be_ids.append(big_edge.big_edge_id)
+        own_cells.append(big_edge.own_cells)
+        vertices = [big_edge.vertices[0].id, big_edge.vertices[-1].id]
         curvatures.append(big_edge.calculate_total_curvature())
 
     force_df = pd.DataFrame({
@@ -158,7 +165,22 @@ def create_csvs(frame) -> tuple:
         "length": lengths,
         "position_x": positions_x,
         "position_y": positions_y,
+        "own_cells": own_cells,
+        "vertices": vertices,
         "curvature": curvatures,
     })
 
-    return cell_df, force_df
+    x_arr = []
+    y_arr = []
+    for _, vertex in frame.vertices.items():
+        
+        x_arr.append(vertex.x)
+        y_arr.append(vertex.y)
+        
+
+    v_df = pd.DataFrame({
+        "position_x": x_arr,
+        "position_y": y_arr,
+    })
+
+    return cell_df, force_df, v_df 
