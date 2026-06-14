@@ -30,7 +30,7 @@ def create_folders(folder_to_create):
             os.makedirs(os.path.join(folder_to_create,
                                      folder_name,
                                      "stress_tensor"))
-            
+
 def create_folders_sweep(folder_to_create):
     if not os.path.exists(folder_to_create):
         os.makedirs(os.path.join(folder_to_create, "connections"))
@@ -92,7 +92,7 @@ def create_plots(frame_number, forsys, res_folder, myo=False, pressure=True, com
                                 colorbar=False)
         plt.savefig(os.path.join(res_folder, "myosin", f"{frame_number}.png"), dpi=350)
         plt.close()
-    
+
     if pressure:
         fs.plot.plot_inference(forsys.frames[frame_number],
                                 step=frame_number,
@@ -103,22 +103,30 @@ def create_plots(frame_number, forsys, res_folder, myo=False, pressure=True, com
                                 colorbar=False)
         plt.savefig(os.path.join(res_folder, "pressures", f"{frame_number}.png"), dpi=350)
         plt.close()
-    
-        fs.plot.plot_stress_tensor(forsys.frames[frame_number], 
-                        os.path.join(res_folder, "stress_tensor"), 
-                        frame_number, 
-                        grid=12, 
+
+        fs.plot.plot_stress_tensor(forsys.frames[frame_number],
+                        os.path.join(res_folder, "stress_tensor"),
+                        frame_number,
+                        grid=12,
                         radius=5,
                         tensor_scale=1.5)
 
+def create_csvs(frame: fs.frames.Frame) -> tuple:
+    """
+    Create DFs for all vertex, cells and big edges
 
-def create_csvs(frame) -> tuple:
+    :frame: Frame object
+    :type fs.frames.Frame: fs.Forsys
+    """
+
+    be_ids = []
     tensions = []
     lengths = []
     positions_x = []
     positions_y = []
-    be_ids = []
     curvatures = []
+    own_cells = []
+    vertices = []
 
     cell_ids = []
     areas = []
@@ -126,6 +134,12 @@ def create_csvs(frame) -> tuple:
     cell_posx = []
     cell_posy = []
     pressures = []
+    neighbors = []
+
+    v_id = []
+    x_arr = []
+    y_arr = []
+    v_cells=[]
 
     for cellid, cell in frame.cells.items():
         cell_ids.append(cellid)
@@ -133,6 +147,7 @@ def create_csvs(frame) -> tuple:
         perimeters.append(cell.get_perimeter())
         cell_posx.append(cell.get_cm()[0])
         cell_posy.append(cell.get_cm()[1])
+        neighbors.append(cell.neighbors)
         pressures.append(cell.pressure)
 
     cell_df = pd.DataFrame({
@@ -141,15 +156,18 @@ def create_csvs(frame) -> tuple:
            "perimeter": perimeters,
            "position_x": cell_posx,
            "position_y": cell_posy,
+           "neighbors": neighbors,
            "pressure": pressures,
     })
 
-    for beid, big_edge in frame.big_edges.items():
+    for _, big_edge in frame.big_edges.items():
         tensions.append(big_edge.tension)
         lengths.append(big_edge.get_length())
         positions_x.append(np.mean(big_edge.xs))
         positions_y.append(np.mean(big_edge.ys))
         be_ids.append(big_edge.big_edge_id)
+        own_cells.append(big_edge.own_cells)
+        vertices.append([big_edge.vertices[0].id, big_edge.vertices[-1].id])
         curvatures.append(big_edge.calculate_total_curvature())
 
     force_df = pd.DataFrame({
@@ -158,7 +176,23 @@ def create_csvs(frame) -> tuple:
         "length": lengths,
         "position_x": positions_x,
         "position_y": positions_y,
+        "own_cells": own_cells,
+        "vertices": vertices,
         "curvature": curvatures,
     })
 
-    return cell_df, force_df
+    for _, vertex in frame.vertices.items():
+        v_id.append(vertex.id)
+        x_arr.append(vertex.x)
+        y_arr.append(vertex.y)
+        v_cells.append(vertex.ownCells)
+
+
+    v_df = pd.DataFrame({
+        "id": v_id,
+        "position_x": x_arr,
+        "position_y": y_arr,
+        "cells":v_cells,
+    })
+
+    return cell_df, force_df, v_df

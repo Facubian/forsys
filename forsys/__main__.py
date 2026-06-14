@@ -206,13 +206,16 @@ if __name__ == '__main__':
 
         if args.output_csv:
             print("Outputting results to CSV file.")
-            cell_df, force_df = fs.auxiliar.create_csvs(forsys.frames[time])
+            cell_df, force_df, v_df = fs.auxiliar.create_csvs(forsys.frames[time])
             cell_df.to_csv(os.path.join(args.save_folder, "csvs",
                                         f"cells_{time}.csv"),
                            index=False)
             force_df.to_csv(os.path.join(args.save_folder, "csvs",
                                          f"stress_{time}.csv"),
                             index=False)
+            v_df.to_csv(os.path.join(args.save_folder, "csvs",
+                                         f"vertex_{time}.csv"),
+                                         index=False)
 
     print("Plotting...")
     if args.pngs:
