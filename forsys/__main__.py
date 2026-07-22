@@ -155,6 +155,10 @@ if __name__ == '__main__':
             options = {"mirror_y": False,
                        "minimum_distance": 5,
                        "expand": 50}
+            
+        elif segmentation_file.endswith(".tif"):
+            options = {"mirror_y": True}
+
         else:
             options = {"mirror_y": False}
         skeleton = fs.skeleton.Skeleton(segmentation_file, **options)
