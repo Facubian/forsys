@@ -58,6 +58,8 @@ if __name__ == '__main__':
                         default=np.inf)
     parser.add_argument("-o", "--output_csv", action="store_true",
                         help="Output the results to a CSV file.")
+    parser.add_argument("-ol", "--output_long_csv", action="store_true",
+                            help="Output the results to a CSV file in long format for all frames.")
 
     args = parser.parse_args()
 
@@ -70,6 +72,8 @@ if __name__ == '__main__':
             os.makedirs(os.path.join(args.save_folder, "connections"))
         if args.output_csv and not os.path.exists(os.path.join(args.save_folder, "csvs")):
             os.makedirs(os.path.join(args.save_folder, "csvs"))
+        if args.output_long_csv and not os.path.exists(os.path.join(args.save_folder, "csvs_long")):
+            os.makedirs(os.path.join(args.save_folder, "csvs_long"))
 
         save_to_tiff = os.path.join(args.save_folder,
                                     "forsys_output.tif")
@@ -210,16 +214,28 @@ if __name__ == '__main__':
 
         if args.output_csv:
             print("Outputting results to CSV file.")
-            cell_df, force_df, v_df = fs.auxiliar.create_csvs(forsys.frames[time])
+            cell_df, force_df, v_df = fs.auxiliar.create_csvs(forsys, time=time)
             cell_df.to_csv(os.path.join(args.save_folder, "csvs",
-                                        f"cells_{time}.csv"),
-                           index=False)
+                                        f"cells_{time}.csv"),index=False)
             force_df.to_csv(os.path.join(args.save_folder, "csvs",
-                                         f"stress_{time}.csv"),
-                            index=False)
+                                         f"stress_{time}.csv"),index=False)
             v_df.to_csv(os.path.join(args.save_folder, "csvs",
-                                         f"vertex_{time}.csv"),
+                                     f"vertex_{time}.csv"), index=False)
+    if args.output_long_csv:
+        print("Outputting results to long CSV file.")
+        cell_df_long, force_df_long, v_df_long = fs.auxiliar.create_csvs_long(forsys)
+        cell_df_long.to_csv(os.path.join(args.save_folder,
+                                         "csvs_long",
+                                         f"cells_long.csv"),
                                          index=False)
+        force_df_long.to_csv(os.path.join(args.save_folder,
+                                          "csvs_long",
+                                          f"stress_long.csv"),
+                                          index=False)
+        v_df_long.to_csv(os.path.join(args.save_folder,
+                                      "csvs_long",
+                                      f"vertex_long.csv"),
+                                      index=False)
 
     print("Plotting...")
     if args.pngs:
