@@ -563,11 +563,6 @@ def plot_cell_displacement(
     :type show_cell_ids: bool, optional
     :return: The figure and axes objects.
     :rtype: Tuple[mpl.figure.Figure, mpl.axes.Axes]
- 
-    Example
-    -------
-    >>> fig, ax = plot_cell_displacement(ts, t0=0, t1=1)
-    >>> plt.show()
     """
     frame0: fframes.Frame = time_series.time_series[t0]
     frame1: fframes.Frame = time_series.time_series[t1]
