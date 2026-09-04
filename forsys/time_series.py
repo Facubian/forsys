@@ -222,16 +222,18 @@ class TimeSeries():
             best = candidates[distances.index(min(distances))]
         return best    
 
-    def map_cells(self, t0: fframes.Frame, t1: fframes.Frame, mapping):
-    
-        mapping_cells = {}
+    def _invert_mapping(self, mapping: dict) -> dict:
         inverse_mapping = {}
 
         for key, value in mapping.items():
-            if value in inverse_mapping.keys():
-                inverse_mapping[value] = [inverse_mapping[value], key]
-            else:
-                inverse_mapping[value] = key
+            inverse_mapping.setdefault(value, []).append(key)
+
+        return inverse_mapping
+
+    def map_cells(self, t0: fframes.Frame, t1: fframes.Frame, mapping):
+    
+        mapping_cells = {}
+        inverse_mapping = self._invert_mapping(mapping)
 
         for c1_id, c1 in t1.cells.items():
             c1_vertices = c1.get_cell_vertices()
@@ -274,10 +276,7 @@ class TimeSeries():
 
         mapping_bedges = {}
 
-        inverse_mapping = {}
-
-        for key, value in mapping.items():
-            inverse_mapping.setdefault(value, []).append(key)
+        inverse_mapping = self._invert_mapping(mapping)
 
         for be1_id, be1 in t1.big_edges.items():
             v1_t1_id = be1.vertices[0].id

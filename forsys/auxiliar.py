@@ -111,18 +111,26 @@ def create_plots(frame_number, forsys, res_folder, myo=False, pressure=True, com
                         radius=5,
                         tensor_scale=1.5)
 
-def create_csvs(forsys: fs.ForSys, time:int, is_mapping:bool = False) -> tuple:
+def create_csvs(forsys: fs.ForSys, time, with_mapping:bool = False) -> tuple:
     """
-    Create DFs for all vertex, cells and big edges
+    Create simple DFs for vertices, cells and big edges for a given frame or \
+    long DFs for all frames if no time was given.
 
     :forsys: Forsys object
     :type forsys: fs.Forsys
     :time: Unique time of the frame
     :type time: int
-    :is_mapping: If True, add mapping into csv
-    :type is_mapping: bool, optional
+    :with_mapping: If True, add mapping into csv
+    :type with_mapping: bool, optional
     """
+    if time is None:
+        cell_df, force_df, v_df = create_csvs_long(forsys, is_mapping=with_mapping)
+        return cell_df, force_df, v_df
+    else:
+        cell_df_long, force_df_long, v_df_long =create_csvs_simple(forsys, time, is_mapping=with_mapping)
+        return cell_df_long, force_df_long, v_df_long
 
+def create_csvs_simple(forsys: fs.ForSys, time:int, is_mapping:bool = False):
     frame = forsys.frames[time]
     
     be_mapped_ids = []
@@ -243,7 +251,7 @@ def create_csvs(forsys: fs.ForSys, time:int, is_mapping:bool = False) -> tuple:
 
     return cell_df, force_df, v_df
 
-def create_csvs_long(forsys: fs.ForSys):
+def create_csvs_long(forsys: fs.ForSys, is_mapping:bool = False) -> tuple:
     """
     Create DFs in long format for vertices, cells and big edges for all frames.
 
@@ -256,37 +264,36 @@ def create_csvs_long(forsys: fs.ForSys):
     force_df_long = None
     v_df_long = None
 
-    is_mapping = True
-
     for t in times:
-        cell_df, force_df, v_df = create_csvs(
+        cell_df, force_df, v_df = create_csvs_simple(
             forsys, t, is_mapping=is_mapping
         )
 
-        # id_prev
-        if t == times[0]:
-            cell_df.insert(0, "id_prev", pd.Series(pd.NA, index=cell_df.index, dtype="Int64"))
-            force_df.insert(0,"id_prev", pd.Series(pd.NA, index=force_df.index, dtype="Int64"))
+        if is_mapping:
+            # id_prev
+            if t == times[0]:
+                cell_df.insert(0, "id_prev", pd.Series(pd.NA, index=cell_df.index, dtype="Int64"))
+                force_df.insert(0,"id_prev", pd.Series(pd.NA, index=force_df.index, dtype="Int64"))
 
-        else:
-            cell_df.rename(columns={"id_mapped": "id_prev"}, inplace=True)
-            force_df.rename(columns={"id_mapped": "id_prev"}, inplace=True)
+            else:
+                cell_df.rename(columns={"id_mapped": "id_prev"}, inplace=True)
+                force_df.rename(columns={"id_mapped": "id_prev"}, inplace=True)
 
-        # id_next
-        if t != times[-1]:
-            cells_map, edge_map = forsys.get_maps(t + 1)
+            # id_next
+            if t != times[-1]:
+                cells_map, edge_map = forsys.get_maps(t + 1)
 
-            cells_map = {v: k for k, v in cells_map.items()}
-            edge_map = {v: int(k) for k, v in edge_map.items()}
+                cells_map = {v: k for k, v in cells_map.items()}
+                edge_map = {v: int(k) for k, v in edge_map.items()}
 
-            id_cell_next = cell_df["id"].map(cells_map).astype("Int64")
-            id_force_next = force_df["id"].map(edge_map).astype("Int64")
-        else:
-            id_cell_next = pd.Series(pd.NA, index=cell_df.index, dtype="Int64")
-            id_force_next = pd.Series(pd.NA, index=force_df.index, dtype="Int64")
+                id_cell_next = cell_df["id"].map(cells_map).astype("Int64")
+                id_force_next = force_df["id"].map(edge_map).astype("Int64")
+            else:
+                id_cell_next = pd.Series(pd.NA, index=cell_df.index, dtype="Int64")
+                id_force_next = pd.Series(pd.NA, index=force_df.index, dtype="Int64")
 
-        cell_df.insert(2, "id_next", id_cell_next)
-        force_df.insert(2, "id_next", id_force_next)
+            cell_df.insert(2, "id_next", id_cell_next)
+            force_df.insert(2, "id_next", id_force_next)
 
         cell_df.insert(0, "time", t)
         force_df.insert(0, "time", t)
